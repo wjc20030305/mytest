@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>防诈小测验</title>
+    <style>
+        :root {
+            --primary-cyan: #20B2AA; /* 平台青 */
+            --primary-cyan-light: #E0F7FA;
+            --secondary-orange: #FF9F43; /* 暖橙 */
+            --secondary-pink: #FF6B6B;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --bg-page: #F4F8FB;
+            --white: #FFFFFF;
+            --success: #4CD964;
+            --error: #FF5E57;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            padding-top: 60px; /* Header height */
+            padding-bottom: 90px; /* Footer height */
+            overflow-x: hidden;
+        }
+
+        /* --- 顶部导航 --- */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+        .nav-back {
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            width: 40px;
+        }
+        .nav-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .nav-progress {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+        .progress-track {
+            width: 60px;
+            height: 6px;
+            background: #EEE;
+            border-radius: 3px;
+            margin-left: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-cyan);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* --- 头部引导区 --- */
+        .header-card {
+            background: linear-gradient(135deg, #20B2AA 0%, #4DD0E1 100%);
+            padding: 24px 20px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            margin-bottom: 20px;
+        }
+        .header-content h1 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            line-height: 1.3;
+        }
+        .header-content p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .header-illustration {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            font-size: 60px;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
+            animation: float 3s ease-in-out infinite;
+        }
+        .balloon {
+            position: absolute;
+            right: 70px;
+            top: 20px;
+            background: var(--white);
+            color: var(--primary-cyan);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .header-tips {
+            margin-top: 12px;
+            font-size: 12px;
+            opacity: 0.8;
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* --- 题目列表区 --- */
+        .question-list {
+            padding: 0 16px;
+        }
+        .question-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+        .q-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        .q-tag {
+            background: var(--secondary-orange);
+            color: var(--white);
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-right: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .q-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+        .q-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 1px solid #EEE;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        /* 选项状态样式 */
+        .option-item.selected {
+            background: var(--primary-cyan);
+            color: var(--white);
+            border-color: var(--primary-cyan);
+            font-weight: bold;
+        }
+        .option-item.selected::after {
+            content: '✔';
+            position: absolute;
+            right: 16px;
+        }
+        .option-item.disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        /* 错误状态 (用于点错时的高亮) */
+        .option-item.wrong {
+            background: var(--error);
+            color: var(--white);
+            border-color: var(--error);
+        }
+        .option-item.wrong::after {
+            content: '✘';
+            position: absolute;
+            right: 16px;
+        }
+
+        /* --- 答案反馈 --- */
+        .feedback-box {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none; /* 默认隐藏 */
+            animation: fadeIn 0.4s ease;
+        }
+        .feedback-box.correct {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        .feedback-box.wrong {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+        .feedback-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* --- 底部提交区 --- */
+        .footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: var(--white);
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            z-index: 90;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        .footer-bar.show {
+            transform: translateY(0);
+        }
+        .footer-info {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+        .btn-submit {
+            width: 100%;
+            height: 44px;
+            background: var(--primary-cyan);
+            color: var(--white);
+            border: none;
+            border-radius: 22px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(32, 178, 170, 0.3);
+        }
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        /* --- 结果全屏层 --- */
+        .result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-page);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            animation: slideUp 0.4s ease;
+        }
+        .result-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .result-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+        .result-desc {
+            font-size: 16px;
+            color: var(--text-sub);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .result-btn {
+            width: 80%;
+            height: 50px;
+            border-radius: 25px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--primary-cyan);
+            color: var(--white);
+            box-shadow: 0 6px 15px rgba(32, 178, 170, 0.4);
+        }
+        .btn-secondary {
+            background: #E0E0E0;
+            color: #666;
+        }
+
+        /* --- 自定义弹窗 --- */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            background: var(--white);
+            width: 80%;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .modal-text { font-size: 14px; color: #666; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; }
+        .btn-cancel { background: #F5F5F5; color: #666; }
+        .btn-confirm { background: var(--secondary-pink); color: white; }
+
+        /* 动画关键帧 */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+        <div class="nav-back" onclick="showExitModal()">←</div>
+        <div class="nav-title">防诈小测验</div>
+        <div class="nav-progress">
+            <span id="progress-text">0/5 题</span>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-bar"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 头部引导 -->
+    <header class="header-card">
+        <div class="balloon">加油哦！🎈</div>
+        <div class="header-content">
+            <h1>完成小测验<br>安全交友更安心～</h1>
+            <p>共5道单选题，答对4题(80%)即可通过</p>
+            <div class="header-tips">💡 错题可查看解析，有多次机会</div>
+        </div>
+        <div class="header-illustration">🛡️</div>
+    </header>
+
+    <!-- 题目列表容器 -->
+    <div id="quiz-container" class="question-list">
+        <!-- 题目将通过JS动态插入 -->
+    </div>
+
+    <!-- 底部提交区 -->
+    <div class="footer-bar" id="footer-bar">
+        <div class="footer-info">已完成所有题目，答对率需≥80%</div>
+        <button class="btn-submit" onclick="submitQuiz()">提交答案</button>
+    </div>
+
+    <!-- 结果层：成功 -->
+    <div class="result-overlay" id="result-pass" style="background: linear-gradient(180deg, #E0F7FA 0%, #FFFFFF 100%);">
+        <div class="result-icon">🎉</div>
+        <div class="result-title" style="color: #2E7D32;">恭喜通过！</div>
+        <div class="result-desc">
+            你已掌握基本防诈知识～<br>
+            账号处罚已解除，继续愉快聊天吧！
+        </div>
+        <button class="result-btn btn-primary" onclick="closeH5()">返回App</button>
+    </div>
+
+    <!-- 结果层：失败 -->
+    <div class="result-overlay" id="result-fail" style="background: linear-gradient(180deg, #FFF3E0 0%, #FFFFFF 100%);">
+        <div class="result-icon">😢</div>
+        <div class="result-title" style="color: #E65100;">再接再厉～</div>
+        <div class="result-desc">
+            本次答对 <span id="score-val" style="color: #FF5E57; font-weight:bold;">0</span>/5 题<br>
+            还需答对 4 题才能通过哦。<br>
+            查看解析后重新挑战吧！
+        </div>
+        <button class="result-btn btn-primary" onclick="restartQuiz()">重新答题</button>
+        <button class="result-btn btn-secondary" onclick="hideResult()">查看错题解析</button>
+    </div>
+
+    <!-- 退出确认弹窗 -->
+    <div class="modal-mask" id="exit-modal">
+        <div class="modal-box">
+            <div class="modal-title">确定要退出吗？</div>
+            <div class="modal-text">未完成测验将无法解除处罚<br>现在的进度将不会保存。</div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="closeExitModal()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="confirmExit()">确定退出</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /* --- 题库数据 (模拟15道题) --- */
+    const questionBank = [
+        { id: 1, type: "诈骗", q: "陌生人快速向你要钱、借钱或让你投资，通常是？", options: ["真爱来了", "杀猪盘诈骗", "系统测试", "朋友急用"], answer: 1, explain: "这是典型的'杀猪盘'骗局，先养感情再诱导投资，切勿转账！" },
+        { id: 2, type: "规则", q: "平台内禁止发送哪类信息？", options: ["日常问候", "风景照片", "第三方赌博/色情链接", "语音消息"], answer: 2, explain: "为了安全，严禁发送黄赌毒及第三方不明链接，违者封号。" },
+        { id: 3, type: "Tips", q: "对方提出'不在平台聊，加QQ/微信裸聊'，你应该？", options: ["立刻同意", "拒绝并举报", "好奇试试", "发送自己照片"], answer: 1, explain: "裸聊是敲诈勒索的高发区，一旦录像将被勒索钱财，请立即举报。" },
+        { id: 4, type: "诈骗", q: "对方声称是'系统客服'，要求你提供登录验证码，是为了？", options: ["帮你升级", "盗取你的账号", "送你礼物", "验证身份"], answer: 1, explain: "官方客服绝不会索要验证码，索要验证码的一律是骗子！" },
+        { id: 5, type: "Tips", q: "第一次线下见面，哪里最安全？", options: ["对方家里", "偏僻公园", "人多的公共场所", "深夜酒吧"], answer: 2, explain: "初次见面请选择人流量大、光线明亮的公共场所，保护人身安全。" },
+        { id: 6, type: "诈骗", q: "关于'高回报低风险'的投资理财推荐，真相是？", options: ["天上掉馅饼", "诈骗陷阱", "发财机会", "内部消息"], answer: 1, explain: "高回报必然伴随高风险，保本高收益通常是诈骗诱饵。" },
+        { id: 7, type: "规则", q: "如果在聊天中受到骚扰或辱骂，最好的处理方式是？", options: ["骂回去", "忍气吞声", "使用平台举报功能", "卸载APP"], answer: 2, explain: "遇到骚扰请善用右上角举报功能，平台小卫士会帮你处理！" },
+        { id: 8, type: "诈骗", q: "对方发来一个链接说'帮我点一下投票'，点击后需要输入银行卡密码，你应该？", options: ["输入密码", "立即关闭", "转发给朋友", "截图留念"], answer: 1, explain: "正规投票不需要银行卡密码，这是钓鱼网站，旨在盗刷资金。" },
+        { id: 9, type: "Tips", q: "为了保护隐私，以下哪个信息不建议过早透露？", options: ["兴趣爱好", "家庭住址/公司名", "喜欢的电影", "星座"], answer: 1, explain: "详细住址、工作单位等核心隐私请勿随意透露给陌生人。" },
+        { id: 10, type: "规则", q: "如何辨别账号是否已通过真人认证？", options: ["看头像帅不帅", "看是否有官方认证标识", "听声音", "看注册时间"], answer: 1, explain: "请认准昵称旁的官方实名/真人认证图标，安全性更高。" },
+        { id: 11, type: "诈骗", q: "卖茶女/支教老师突然加你，聊久了说爷爷病了要卖茶，这是？", options: ["需要帮助", "缘分", "剧本式诈骗", "真实创业"], answer: 2, explain: "这是经典剧本诈骗，利用同情心高价售卖劣质产品。" },
+        { id: 12, type: "Tips", q: "面基时对方提供的饮料，离开视线后还可以喝吗？", options: ["没关系", "坚决不喝", "少喝一点", "看对方喝没喝"], answer: 1, explain: "防人之心不可无，离开视线的食物饮料可能被下药，坚决不喝。" },
+        { id: 13, type: "诈骗", q: "对方自称'美国大兵'或'维和部队'，寄包裹给你需要你付运费，这是？", options: ["国际诈骗", "浪漫爱情", "真实求助", "跨国友谊"], answer: 0, explain: "典型的跨国包裹诈骗，千万不要支付任何关税或运费。" },
+        { id: 14, type: "规则", q: "遇到诱导你下载其他不知名APP进行视频聊天的，通常是？", options: ["更好用", "引流诈骗", "省流量", "功能多"], answer: 1, explain: "不知名APP可能植入木马或包含博彩诈骗信息，请勿下载。" },
+        { id: 15, type: "Tips", q: "发现自己可能被骗了钱，第一步做什么？", options: ["自认倒霉", "找对方理论", "立即报警并联系平台", "删除好友"], answer: 2, explain: "保留聊天和转账记录，第一时间报警，黄金时间可追回损失。" }
+    ];
+
+    /* --- 全局状态 --- */
+    let currentQuestions = [];
+    let userAnswers = {}; // { questionId: optionIndex }
+    let answeredCount = 0;
+    const TOTAL_QUESTIONS = 5;
+
+    /* --- 初始化 --- */
+    function init() {
+        // 随机抽取5题
+        const shuffled = questionBank.sort(() => 0.5 - Math.random());
+        currentQuestions = shuffled.slice(0, TOTAL_QUESTIONS);
+        userAnswers = {};
+        answeredCount = 0;
+        
+        renderQuestions();
+        updateProgress();
+        document.getElementById('footer-bar').classList.remove('show');
+        document.getElementById('result-pass').style.display = 'none';
+        document.getElementById('result-fail').style.display = 'none';
+        
+        // 滚动回顶部
+        window.scrollTo(0, 0);
+    }
+
+    /* --- 渲染题目 --- */
+    function renderQuestions() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+
+        currentQuestions.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${item.id}`;
+
+            let optionsHtml = '';
+            item.options.forEach((opt, optIndex) => {
+                optionsHtml += `<div class="option-item" onclick="selectOption(${item.id}, ${optIndex}, ${item.answer}, this)">${String.fromCharCode(65+optIndex)}. ${opt}</div>`;
+            });
+
+            card.innerHTML = `
+                <div class="q-header">
+                    <span class="q-tag">第${index + 1}题</span>
+                    <div class="q-text">${item.q}</div>
+                </div>
+                <div class="q-options" id="opt-group-${item.id}">
+                    ${optionsHtml}
+                </div>
+                <div class="feedback-box" id="feedback-${item.id}">
+                    <div class="feedback-title" id="fb-title-${item.id}"></div>
+                    <div class="feedback-text">${item.explain}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    /* --- 选择选项逻辑 --- */
+    function selectOption(qId, optIndex, correctIndex, elem) {
+        // 如果该题已答过，不可重复选择
+        if (userAnswers.hasOwnProperty(qId)) return;
+
+        // 记录答案
+        userAnswers[qId] = optIndex;
+        answeredCount++;
+
+        // UI 状态更新
+        const isCorrect = (optIndex === correctIndex);
+        
+        // 样式处理
+        if (isCorrect) {
+            elem.classList.add('selected');
+        } else {
+            elem.classList.add('wrong');
+            // 高亮正确答案
+            const group = document.getElementById(`opt-group-${qId}`);
+            group.children[correctIndex].classList.add('selected'); 
+        }
+
+        // 禁用该题所有选项
+        const group = document.getElementById(`opt-group-${qId}`);
+        Array.from(group.children).forEach(child => child.classList.add('disabled'));
+
+        // 显示解析
+        const fbBox = document.getElementById(`feedback-${qId}`);
+        const fbTitle = document.getElementById(`fb-title-${qId}`);
+        
+        fbBox.style.display = 'block';
+        if (isCorrect) {
+            fbBox.classList.add('correct');
+            fbTitle.innerHTML = '✨ 答对啦～';
+        } else {
+            fbBox.classList.add('wrong');
+            fbTitle.innerHTML = '🤔 再想想哦～';
+        }
+
+        // 更新进度
+        updateProgress();
+
+        // 检查是否全部完成
+        if (answeredCount === TOTAL_QUESTIONS) {
+            document.getElementById('footer-bar').classList.add('show');
+            // 自动滚动到底部方便看到提交按钮
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 300);
+        }
+    }
+
+    /* --- 更新进度条 --- */
+    function updateProgress() {
+        const percent = (answeredCount / TOTAL_QUESTIONS) * 100;
+        document.getElementById('progress-bar').style.width = `${percent}%`;
+        document.getElementById('progress-text').innerText = `${answeredCount}/${TOTAL_QUESTIONS} 题`;
+    }
+
+    /* --- 提交与判分 --- */
+    function submitQuiz() {
+        let score = 0;
+        currentQuestions.forEach(q => {
+            if (userAnswers[q.id] === q.answer) {
+                score++;
+            }
+        });
+
+        const passThreshold = 4; // 80% of 5
+        
+        if (score >= passThreshold) {
+            // 通过
+            document.getElementById('result-pass').style.display = 'flex';
+        } else {
+            // 未通过
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('result-fail').style.display = 'flex';
+        }
+    }
+
+    /* --- 交互控制 --- */
+    function restartQuiz() {
+        init();
+    }
+
+    function hideResult() {
+        // 仅隐藏结果层，允许查看当前页面的解析
+        document.getElementById('result-fail').style.display = 'none';
+        document.getElementById('footer-bar').classList.remove('show'); // 隐藏提交按钮，防止重复提交
+    }
+
+    function closeH5() {
+        // 模拟关闭 Webview 或回调原生 App
+        console.log("Call Native: Penalty Lifted");
+        try {
+            // 如果是在App内，这里调用原生协议，例如：
+            // window.location.href = "app://close?status=success";
+            alert("模拟：回调App解除处罚，关闭页面");
+        } catch(e) {}
+    }
+
+    /* --- 退出拦截 --- */
+    function showExitModal() {
+        document.getElementById('exit-modal').style.display = 'flex';
+    }
+    
+    function closeExitModal() {
+        document.getElementById('exit-modal').style.display = 'none';
+    }
+
+    function confirmExit() {
+        // 模拟退出
+        try {
+            // window.location.href = "app://back";
+            alert("模拟：退出H5页面");
+            closeExitModal();
+        } catch(e) {}
+    }
+
+    // 启动
+    init();
+
+</script>
+</body>
+</html>
